@@ -114,6 +114,12 @@ public class Home extends AppCompatActivity {
             startActivity(i);
         });
 
+        solvedQuizzes.setOnClickListener(v -> {
+            Intent i = new Intent(Home.this, ListQuizzes.class);
+            i.putExtra("Operation", "List Solved Quizzes");
+
+        } );
+
 
     }
 }
