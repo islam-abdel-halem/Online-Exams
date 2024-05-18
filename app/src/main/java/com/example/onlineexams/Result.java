@@ -1,6 +1,9 @@
 package com.example.onlineexams;
 
-import android.annotation.SuppressLint;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,14 +14,6 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -26,14 +21,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Objects;
-
 public class Result extends AppCompatActivity {
 
     private Question[] data;
     private String uid;
     private String quizID;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,45 +33,44 @@ public class Result extends AppCompatActivity {
         setContentView(R.layout.activity_result);
 
         quizID = getIntent().getStringExtra("Quiz ID");
-        uid = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        if (getIntent().hasExtra("User UID")) uid = getIntent().getStringExtra("UserUID");
+        if (getIntent().hasExtra("User UID")) uid = getIntent().getStringExtra("User UID");
 
         TextView title = findViewById(R.id.title);
-        ListView listView = findViewById(R.id.listview);
+        ListView listview = findViewById(R.id.listview);
         TextView total = findViewById(R.id.total);
 
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         ValueEventListener listener = new ValueEventListener() {
-            @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.child("Quizzes").hasChild(quizID)){
+                if (snapshot.child("Quizzes").hasChild(quizID)) {
                     DataSnapshot ansRef = snapshot.child("Quizzes").child(quizID).child("Answers").child(uid);
                     DataSnapshot qRef = snapshot.child("Quizzes").child(quizID);
-                    title.setText(Objects.requireNonNull(qRef.child("Title").getValue()).toString());
-                    int num = Integer.parseInt(Objects.requireNonNull(qRef.child("Total Questions").getValue()).toString());
+                    title.setText(qRef.child("Title").getValue().toString());
+                    int num = Integer.parseInt(qRef.child("Total Questions").getValue().toString());
                     data = new Question[num];
-                    int correctAns =0;
-                    for (int i=0;i<num;i++){
-                        DataSnapshot qRef2 = qRef.child("Question").child(String.valueOf(i));
+                    int correctAns = 0;
+                    for (int i=0;i<num;i++) {
+                        DataSnapshot qRef2 = qRef.child("Questions").child(String.valueOf(i));
                         Question question = new Question();
-                        question.setQuestion(Objects.requireNonNull(qRef2.child("Question").getValue()).toString());
-                        question.setOption1(Objects.requireNonNull(qRef2.child("Option1").getValue()).toString());
-                        question.setOption2(Objects.requireNonNull(qRef2.child("Option2").getValue()).toString());
-                        question.setOption3(Objects.requireNonNull(qRef2.child("Option3").getValue()).toString());
-                        question.setOption4(Objects.requireNonNull(qRef2.child("Option4").getValue()).toString());
+                        question.setQuestion(qRef2.child("Question").getValue().toString());
+                        question.setOption1(qRef2.child("Option 1").getValue().toString());
+                        question.setOption2(qRef2.child("Option 2").getValue().toString());
+                        question.setOption3(qRef2.child("Option 3").getValue().toString());
+                        question.setOption4(qRef2.child("Option 4").getValue().toString());
                         question.setSelectedAnswer(Integer.parseInt(
-                                Objects.requireNonNull(ansRef.child(String.valueOf((i + 1))).getValue()).toString()));
-                        int ans = Integer.parseInt(Objects.requireNonNull(qRef2.child("Correct Answer").getValue()).toString());
-                        if (question.getSelectedAnswer()==ans) correctAns++;
+                                ansRef.child(String.valueOf((i+1))).getValue().toString()));
+                        int ans = Integer.parseInt(qRef2.child("Ans").getValue().toString());
+                        if (ans==question.getSelectedAnswer()) correctAns++;
                         question.setCorrectAnswer(ans);
                         data[i] = question;
                     }
-                    total.setText("Total "+correctAns + " / " +data.length);
+                    total.setText("Total "+correctAns+"/"+data.length);
                     ListAdapter listAdapter = new ListAdapter(data);
-                    listView.setAdapter(listAdapter);
-                }else {
+                    listview.setAdapter(listAdapter);
+                } else {
                     finish();
                 }
             }
@@ -94,8 +85,7 @@ public class Result extends AppCompatActivity {
     }
 
     public class ListAdapter extends BaseAdapter {
-
-        final Question[] arr;
+        Question[] arr;
 
         ListAdapter(Question[] arr2) {
             arr = arr2;
@@ -117,10 +107,10 @@ public class Result extends AppCompatActivity {
         }
 
         @Override
-        public View getView(int i, View View, ViewGroup viewGroup) {
+        public View getView(int i, View view, ViewGroup viewGroup) {
 
             LayoutInflater inflater = getLayoutInflater();
-            @SuppressLint({"ViewHolder", "InflateParams"}) View v = inflater.inflate(R.layout.question, null);
+            View v = inflater.inflate(R.layout.question, null);
 
             TextView question = v.findViewById(R.id.question);
             RadioButton option1 = v.findViewById(R.id.option1);
@@ -155,36 +145,37 @@ public class Result extends AppCompatActivity {
             option3.setEnabled(false);
             option4.setEnabled(false);
 
-            result.setVisibility(android.view.View.VISIBLE);
+            result.setVisibility(View.VISIBLE);
 
-            if (data[i].getSelectedAnswer()==data[i].getCorrectAnswer()){
+            if (data[i].getSelectedAnswer()==data[i].getCorrectAnswer()) {
                 result.setBackgroundResource(R.drawable.green_background);
-                result.setTextColor(ContextCompat.getColor(Result.this,R.color.green_dark));
+                result.setTextColor(ContextCompat.getColor(Result.this, R.color.green_dark));
                 result.setText("Correct Answer");
             } else {
                 result.setBackgroundResource(R.drawable.red_background);
-                result.setTextColor(ContextCompat.getColor(Result.this,R.color.red_dark));
+                result.setTextColor(ContextCompat.getColor(Result.this, R.color.red_dark));
                 result.setText("Wrong Answer");
-            }
 
-            switch (data[i].getCorrectAnswer()){
-                case 1:
-                    option1.setBackgroundResource(R.drawable.green_background);
-                    break;
-                case 2:
-                option2.setBackgroundResource(R.drawable.green_background);
-                break;
-                case 3:
-                option3.setBackgroundResource(R.drawable.green_background);
-                break;
-                case 4:
-                option4.setBackgroundResource(R.drawable.green_background);
-                break;
+                switch (data[i].getCorrectAnswer()) {
+                    case 1:
+                        option1.setBackgroundResource(R.drawable.green_background);
+                        break;
+                    case 2:
+                        option2.setBackgroundResource(R.drawable.green_background);
+                        break;
+                    case 3:
+                        option3.setBackgroundResource(R.drawable.green_background);
+                        break;
+                    case 4:
+                        option4.setBackgroundResource(R.drawable.green_background);
+                        break;
+                }
 
             }
 
             return v;
         }
     }
+
 
 }

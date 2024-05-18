@@ -1,6 +1,8 @@
 package com.example.onlineexams;
 
-import android.annotation.SuppressLint;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,17 +13,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.Objects;
 
 public class Home extends AppCompatActivity {
 
@@ -33,7 +30,6 @@ public class Home extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         ProgressDialog progressDialog = new ProgressDialog(Home.this);
         progressDialog.setMessage("Loading...");
@@ -41,7 +37,7 @@ public class Home extends AppCompatActivity {
         progressDialog.show();
 
         Bundle b = getIntent().getExtras();
-        userUID = Objects.requireNonNull(b).getString("User UID");
+        userUID = b.getString("User UID");
 
         TextView name = findViewById(R.id.name);
         TextView total_questions = findViewById(R.id.total_questions);
@@ -55,27 +51,24 @@ public class Home extends AppCompatActivity {
         ImageView signout = findViewById(R.id.signout);
 
         ValueEventListener listener = new ValueEventListener() {
-            @SuppressLint({"SetTextI18n", "DefaultLocale"})
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 DataSnapshot usersRef = snapshot.child("Users").child(userUID);
-                firstName = Objects.requireNonNull(usersRef.child("First Name").getValue()).toString();
+                firstName = usersRef.child("First Name").getValue().toString();
 
                 if (usersRef.hasChild("Total Points")) {
-                    String totalPoints = Objects.requireNonNull(usersRef.child("Total Points").getValue()).toString();
+                    String totalPoints = usersRef.child("Total Points").getValue().toString();
                     int points = Integer.parseInt(totalPoints);
                     total_points.setText(String.format("%03d", points));
                 }
-
                 if (usersRef.hasChild("Total Questions")) {
-                    String totalQuestions = Objects.requireNonNull(usersRef.child("Total Questions").getValue()).toString();
+                    String totalQuestions = usersRef.child("Total Questions").getValue().toString();
                     int questions = Integer.parseInt(totalQuestions);
                     total_questions.setText(String.format("%03d", questions));
                 }
                 name.setText("Welcome " + firstName + "!");
                 progressDialog.dismiss();
             }
-
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -84,7 +77,7 @@ public class Home extends AppCompatActivity {
         };
         database.addValueEventListener(listener);
 
-        signout.setOnClickListener(View -> {
+        signout.setOnClickListener(view -> {
             FirebaseAuth.getInstance().signOut();
             Intent i = new Intent(Home.this, MainActivity.class);
             startActivity(i);
@@ -96,7 +89,6 @@ public class Home extends AppCompatActivity {
                 quiz_title.setError("Quiz title cannot be empty");
                 return;
             }
-
             Intent i = new Intent(Home.this, ExamEditor.class);
             i.putExtra("Quiz Title", quiz_title.getText().toString());
             quiz_title.setText("");
@@ -105,7 +97,7 @@ public class Home extends AppCompatActivity {
 
         startQuiz.setOnClickListener(v -> {
             if (start_quiz_id.getText().toString().equals("")) {
-                start_quiz_id.setError("Quiz title connot be empty");
+                start_quiz_id.setError("Quiz title cannot be empty");
                 return;
             }
             Intent i = new Intent(Home.this, Exam.class);
@@ -117,9 +109,14 @@ public class Home extends AppCompatActivity {
         solvedQuizzes.setOnClickListener(v -> {
             Intent i = new Intent(Home.this, ListQuizzes.class);
             i.putExtra("Operation", "List Solved Quizzes");
+            startActivity(i);
+        });
 
-        } );
-
+        your_quizzes.setOnClickListener(v -> {
+            Intent i = new Intent(Home.this, ListQuizzes.class);
+            i.putExtra("Operation", "List Created Quizzes");
+            startActivity(i);
+        });
 
     }
 }

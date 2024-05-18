@@ -1,4 +1,5 @@
 package com.example.onlineexams;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -8,14 +9,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
+
     private FirebaseAuth auth;
 
     @Override
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
-        if (user != null) {
+        if (user!=null) {
             Intent i = new Intent(MainActivity.this, Home.class);
             i.putExtra("User UID", user.getUid());
             startActivity(i);
@@ -43,36 +43,25 @@ public class MainActivity extends AppCompatActivity {
             progressDialog.setCancelable(false);
             progressDialog.show();
 
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String em = email.getText().toString();
-                    String pass = password.getText().toString();
-                    auth.signInWithEmailAndPassword(em, pass).addOnCompleteListener(MainActivity.this,
-                            (OnCompleteListener<AuthResult>) task -> {
-                                if (task.isSuccessful()) {
-                                    FirebaseUser user = auth.getCurrentUser();
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            progressDialog.dismiss();
-                                            Intent i = new Intent(MainActivity.this, Home.class);
-                                            i.putExtra("User UID", user.getUid());
-                                            startActivity(i);
-                                            finish();
-                                        }
-                                    });
-                                } else {
-                                    Toast.makeText(MainActivity.this, "Operation Failed.", Toast.LENGTH_SHORT).show();
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            progressDialog.dismiss();
-                                        }
-                                    });
-                                }
-                            });
-                }
+            Thread thread = new Thread(() -> {
+                String em = email.getText().toString();
+                String pass = password.getText().toString();
+                auth.signInWithEmailAndPassword(em, pass).addOnCompleteListener(MainActivity.this,
+                        (OnCompleteListener<AuthResult>) task -> {
+                            if (task.isSuccessful()) {
+                                FirebaseUser user1 = auth.getCurrentUser();
+                                runOnUiThread(() -> {
+                                    progressDialog.dismiss();
+                                    Intent i = new Intent(MainActivity.this, Home.class);
+                                    i.putExtra("User UID", user1.getUid());
+                                    startActivity(i);
+                                    finish();
+                                });
+                            } else {
+                                Toast.makeText(MainActivity.this, "Operation Failed.", Toast.LENGTH_SHORT).show();
+                                runOnUiThread(progressDialog::dismiss);
+                            }
+                        });
             });
             thread.start();
         });
@@ -82,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(i);
             finish();
         });
-
 
     }
 }
